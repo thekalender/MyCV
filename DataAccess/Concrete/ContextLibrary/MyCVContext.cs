@@ -1,4 +1,5 @@
-﻿using Entities.Concrete;
+﻿using Core.Entity.Concrete;
+using Entities.Concrete;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -21,5 +22,8 @@ namespace DataAccess.Concrete.ContextLibrary
         public DbSet<ClmTwoSkill> ClmTwoSkills { get; set; }
         public DbSet<Contact> Contacts { get; set; }
         public DbSet<Service> Services { get; set; }
+        public DbSet<User> Users { get; set; }
+        public DbSet<OperationClaim> OperationClaims { get; set; }
+        public DbSet<UserOperationClaim> UserOperationClaims { get; set; }
     }
 }

@@ -1,7 +1,10 @@
 ﻿using Business.Abstract;
 using Business.Concrete;
+using Core.Utilities.Security.Encyption;
+using Core.Utilities.Security.Jwt;
 using DataAccess.Absract;
 using DataAccess.Concrete.EntityFramework;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -9,6 +12,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -31,6 +35,31 @@ namespace MyCV.API
             services.AddControllers();
             services.AddMvcCore().AddApiExplorer();
 
+            // Burası önemli.bu portun dışındakilere cevap verme demektir.
+            services.AddCors(options =>
+            {
+                options.AddPolicy("AllowOrigin",
+                    builder => builder.WithOrigins("http://localhost:4371"));
+            });
+
+            //appsettings.jsonda ki TokenOptions jsona erişmemizi sağlıyor.
+            var tokenOptions = Configuration.GetSection("TokenOptions").Get<TokenOptions>();
+
+            //JwtBearerDefaults kulananabilmek için nugetten "Microsoft.AspNetCore.Authentication.JwtBearer" 5 sürümünü indirmek lazım.
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(option =>
+            {
+                option.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidIssuer = tokenOptions.Issuer,
+                    ValidAudience = tokenOptions.Audience,
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = SecurityKeyHelper.CreateSecurityKey(tokenOptions.SecurityKey)
+                };
+            });
+
             services.AddSwaggerDocument(config => {
                 config.PostProcess = (doc =>
                 {
@@ -45,27 +74,7 @@ namespace MyCV.API
                     };
                 });
             });//Swagger => Swagger için nugetten Nswag.AspNetCore indirmemiz lazýmdýr.
-
-            services.AddSingleton<IAboutDal, EfAboutDal>();
-            services.AddSingleton<IAboutService, AboutManager>();
-
-            services.AddSingleton<IClmOneExperinceDal, EfClmOneExperinceDal>();
-            services.AddSingleton<IClmOneExperienceService, ClmOneExperienceManager>();
-
-            services.AddSingleton<IClmTwoExperinceDal, EfClmTwoExperienceDal>();
-            services.AddSingleton<IClmTwoExperinceService, ClmTwoExperienceManager>();
-
-            services.AddSingleton<IClmOneSkillDal, EfClmOneSkillDal>();
-            services.AddSingleton<IClmOneSkillService, ClmOneSkillManager>();
-
-            services.AddSingleton<IClmTwoSkillDal, EfClmTwoSkillDal>();
-            services.AddSingleton<IClmTwoSkillService, ClmTwoSkillManager>();
-
-            services.AddSingleton<IContactDal, EfContactDal>();
-            services.AddSingleton<IContactService, ContactManager>();
-
-            services.AddSingleton<IServiceDal, EfServiceDal>();
-            services.AddSingleton<IServiceService, ServiceManager>();
+        
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -81,9 +90,12 @@ namespace MyCV.API
             app.UseSwaggerUi3();
             //Swagger_end
 
+            app.UseCors(builder => builder.WithOrigins("http://localhost:4371").AllowAnyHeader()); // Bu hosttan gelen isteklere cevap ver demektir.(CRUD işlemlerine yani cevap ver demek)
             app.UseRouting();
 
-            app.UseAuthorization();
+            app.UseAuthentication(); // Bir yere girmek için anahtar diye düşünebiliriz. ortama giriş anahtarıda diyebiliriz.
+
+            app.UseAuthorization(); // içeri girdiğimiz herhangi bir yerde ne yapabiliriz. elinde anahtar var ama istediğimiz koşulları yapar demek
 
             app.UseEndpoints(endpoints =>
             {

@@ -22,6 +22,7 @@ namespace MyCV.API.Controllers
         }
     
         [HttpGet]
+        [Route("[action]")]
         public async Task<IActionResult> Index()
         {
             var model = new ContactListViewModel
@@ -31,6 +32,8 @@ namespace MyCV.API.Controllers
             return Ok(model);
         }
 
+        [HttpDelete]
+        [Route("[action]/{id}")]
         public async Task<IActionResult>Delete(int id)
         {
             var modelId = await _contactService.Get(id);

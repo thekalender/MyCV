@@ -8,7 +8,7 @@ using System.Text;
 
 namespace DataAccess.Concrete.EntityFramework
 {
-    public class EfAboutDal : EfEntityBaseRepository<About,MyCVContext>,IAboutDal
+    public class EfAboutDal : EfEntityBaseRepository<About, MyCVContext>, IAboutDal
     {
     }
 }
